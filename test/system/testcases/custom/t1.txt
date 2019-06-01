@@ -1,0 +1,34 @@
+insert 1 "user1" "user1@example.com" 10
+insert 2 "user2" "user2@example.com" 20
+insert 3 "user3" "user3@example.com" 30
+insert 4 "user4" "user4@example.com" 40
+insert 4 "user4" "user4@example.com" 40
+select * from table
+select count(*) from table
+select sum(age), avg(id), count(name) from table where age >=30
+delete from table where email= "user2@example.com"
+select name from table where age<30.5
+delete from table
+select count(*) from table
+insert 5 "user5" "user5@example.com" 50
+insert 6 "user6" "user6@example.com" 50
+insert 7 "user7" "user7@example.com" 70
+select * from table
+update table set email = "user567@example.com"
+select * from table
+update table set id=5 where age>=50
+select id from table
+update table set id=5 where name!="user5" and name !="user7"
+select id from table
+update table set id=5 where email= "user567@example.com" and name = "user5"
+select id from table
+delete from table where id=6 or age =70
+select * from table
+insert 6 "user6_2" "user6_2@example.com" 60
+select count(*), avg(age) from table
+update table set name = "user5_2" where email != "user6_2@example.com"
+select * from table
+insert 1 "user1_2" "user1_2@example.com" 15
+select name from table where age!=50 offset 1 limit 1
+select age from table where age!=50 limit 1
+.exit

@@ -1,0 +1,14 @@
+# For python cache
+**/*__pycache__
+
+# For vscode
+.vscode/*
+
+# For c object file
+**/*.o
+
+# For output binary
+shell
+
+# For system test output
+test/system/output/*
