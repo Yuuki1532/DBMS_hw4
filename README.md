@@ -20,3 +20,7 @@ This project is a simple DBMS implemented using C, as the education material of 
 ### log
 - initial commit (9d76308)
     - temporarily fixed compability for new testdata with `user table`
+- update readme.md (e07f944)
+- update Makefile ()
+    - change `CC` in `Makefile` to `g++`
+    - add flags `-std=c++11 -O2`to `CFLAGS`
