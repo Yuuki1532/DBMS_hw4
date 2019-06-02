@@ -1,34 +1,34 @@
-insert 1 "user1" "user1@example.com" 10
-insert 2 "user2" "user2@example.com" 20
-insert 3 "user3" "user3@example.com" 30
-insert 4 "user4" "user4@example.com" 40
-insert 4 "user4" "user4@example.com" 40
-select * from table
-select count(*) from table
-select sum(age), avg(id), count(name) from table where age >=30
-delete from table where email= "user2@example.com"
-select name from table where age<30.5
-delete from table
-select count(*) from table
-insert 5 "user5" "user5@example.com" 50
-insert 6 "user6" "user6@example.com" 50
-insert 7 "user7" "user7@example.com" 70
-select * from table
-update table set email = "user567@example.com"
-select * from table
-update table set id=5 where age>=50
-select id from table
-update table set id=5 where name!="user5" and name !="user7"
-select id from table
-update table set id=5 where email= "user567@example.com" and name = "user5"
-select id from table
-delete from table where id=6 or age =70
-select * from table
-insert 6 "user6_2" "user6_2@example.com" 60
-select count(*), avg(age) from table
-update table set name = "user5_2" where email != "user6_2@example.com"
-select * from table
-insert 1 "user1_2" "user1_2@example.com" 15
-select name from table where age!=50 offset 1 limit 1
-select age from table where age!=50 limit 1
+insert into user 1 "user1" "user1@example.com" 10
+insert into user 2 "user2" "user2@example.com" 20
+insert into user 3 "user3" "user3@example.com" 30
+insert into user 4 "user4" "user4@example.com" 40
+insert into user 4 "user4" "user4@example.com" 40
+select * from user
+select count(*) from user
+select sum(age), avg(id), count(name) from user where age >= 30
+delete from user where email = "user2@example.com"
+select name from user where age < 30.5
+delete from user
+select count(*) from user
+insert into user 5 "user5" "user5@example.com" 50
+insert into user 6 "user6" "user6@example.com" 50
+insert into user 7 "user7" "user7@example.com" 70
+select * from user
+update user set email = "user567@example.com"
+select * from user
+update user set id = 5 where age >= 50
+select id from user
+update user set id = 5 where name != "user5" and name != "user7"
+select id from user
+update user set id = 5 where email = "user567@example.com" and name = "user5"
+select id from user
+delete from user where id = 6 or age = 70
+select * from user
+insert into user 6 "user6_2" "user6_2@example.com" 60
+select count(*), avg(age) from user
+update user set name = "user5_2" where email != "user6_2@example.com"
+select * from user
+insert into user 1 "user1_2" "user1_2@example.com" 15
+select name from user where age != 50 offset 1 limit 1
+select age from user where age != 50 limit 1
 .exit
