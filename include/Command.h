@@ -34,13 +34,22 @@ typedef struct WhereClauses{
     char *logical_op;
 } WhereClauses_t;
 
+typedef struct JoinClauses{
+    //table to join will always be `User` and `Like` (in order)
+    //condition will always be one of id = id1 or id = id2
+    int hasJoin;
+    int like_field; // 1 or 2 to represent id1 or id2 respectively
+} JoinClauses_t;
+
 typedef struct SelectArgs {
+    char *table;
     char **fields;
     size_t fields_len;
     int offset;
     int limit;
     int isAggr;
     WhereClauses_t where_args;
+    JoinClauses_t join_args;
 } SelectArgs_t;
 
 typedef struct DeleteArgs {

@@ -4,12 +4,14 @@
 #include "SelectState.h"
 
 void field_state_handler(Command_t *cmd, size_t arg_idx) {
+    cmd->cmd_args.sel_args.table = NULL;
     cmd->cmd_args.sel_args.fields = NULL;
     cmd->cmd_args.sel_args.fields_len = 0;
     cmd->cmd_args.sel_args.limit = -1;
     cmd->cmd_args.sel_args.offset = -1;
     cmd->cmd_args.sel_args.isAggr = 0;
     cmd->cmd_args.sel_args.where_args.conditions_len = 0;
+    cmd->cmd_args.sel_args.join_args.hasJoin = 0;
 
     while(arg_idx < cmd->args_len) {
         if (!strncmp(cmd->args[arg_idx], "*", 1)) {
@@ -45,11 +47,19 @@ void field_state_handler(Command_t *cmd, size_t arg_idx) {
 }
 
 void table_state_handler(Command_t *cmd, size_t arg_idx) {
-    if (arg_idx < cmd->args_len
-            && !strncmp(cmd->args[arg_idx], "user", 4)) {
+    if (arg_idx < cmd->args_len){
+        if(!strncmp(cmd->args[arg_idx], "user", 4)) {
+            cmd->cmd_args.sel_args.table = strdup("user");
+        }
+        else if(!strncmp(cmd->args[arg_idx], "like", 4)) {
+            cmd->cmd_args.sel_args.table = strdup("like");
+        }
 
         arg_idx++;
         if (arg_idx == cmd->args_len) {
+            return;
+        } else if (!strncmp(cmd->args[arg_idx], "join", 4)) {
+            join_state_handler(cmd, arg_idx+1);
             return;
         } else if (!strncmp(cmd->args[arg_idx], "where", 5)) {
             where_state_handler(cmd, &(cmd->cmd_args.sel_args.where_args), arg_idx+1);
@@ -105,9 +115,14 @@ void update_table_state_handler(Command_t *cmd, size_t arg_idx) {
 
             arg_idx++;
 
+            cmd->cmd_args.update_args.field_name = strdup(cmd->args[arg_idx]);
+            arg_idx += 2; //skip '='
+            cmd->cmd_args.update_args.rhs_literal = strdup(cmd->args[arg_idx]);
+            arg_idx ++;
+
             //handle field=value part
 
-            int current_term = 0; //lhs or rhs
+            /*int current_term = 0; //lhs or rhs
 
             while (arg_idx < cmd->args_len){
                 char *cmd_dup = strdup(cmd->args[arg_idx]);
@@ -136,7 +151,7 @@ void update_table_state_handler(Command_t *cmd, size_t arg_idx) {
 
                 if (current_term == 2)
                     break;
-            }
+            }*/
 
             if (arg_idx == cmd->args_len) return;
 
@@ -158,8 +173,16 @@ void where_state_handler(Command_t *cmd, WhereClauses_t *where_args, size_t arg_
 
     //handle a single condition
     //condition_state_handler(cmd, arg_idx);
+
+    int condition_idx = where_args->conditions_len;
+    where_args->conditions[condition_idx].field_name = strdup(cmd->args[arg_idx]);
+    where_args->conditions[condition_idx].realtional_op = strdup(cmd->args[arg_idx + 1]);
+    where_args->conditions[condition_idx].rhs_literal = strdup(cmd->args[arg_idx + 2]);
+    arg_idx += 3;
+    where_args->conditions_len += 1;
+
     //op: >, <, >=, <=, =, !=
-    const int op_num = 6;
+    /*const int op_num = 6;
     const char *op_str[] = {">=", "<=", "!=", ">", "<", "="};
 
     int condition_idx = where_args->conditions_len;
@@ -202,11 +225,10 @@ void where_state_handler(Command_t *cmd, WhereClauses_t *where_args, size_t arg_
 
         if (current_term == 2)
             break;
-    }
+    }*/
 
     if (arg_idx == cmd->args_len) return;
 
-   
     if (!strncmp(cmd->args[arg_idx], "and", 3)){
         if (where_args->conditions_len != 1){
             cmd->type = UNRECOG_CMD;
@@ -269,6 +291,34 @@ void limit_state_handler(Command_t *cmd, size_t arg_idx) {
             return;
         }
     }
+    cmd->type = UNRECOG_CMD;
+    return;
+}
+
+void join_state_handler(Command_t *cmd, size_t arg_idx){
+    cmd->cmd_args.sel_args.join_args.hasJoin = 1;
+    //(join) like on id = id1
+    if (cmd->args[arg_idx + 4][2] == '1'){
+        cmd->cmd_args.sel_args.join_args.like_field = 1;
+    }
+    else if (cmd->args[arg_idx + 4][2] == '2'){
+        cmd->cmd_args.sel_args.join_args.like_field = 2;
+    }
+    arg_idx += 5;
+    
+    if (arg_idx == cmd->args_len){
+        return;
+    } else if (!strncmp(cmd->args[arg_idx], "where", 5)) {
+        where_state_handler(cmd, &(cmd->cmd_args.sel_args.where_args), arg_idx+1);
+        return;
+    } else if (!strncmp(cmd->args[arg_idx], "offset", 6)) {
+        offset_state_handler(cmd, arg_idx+1);
+        return;
+    } else if (!strncmp(cmd->args[arg_idx], "limit", 5)) {
+        limit_state_handler(cmd, arg_idx+1);
+        return;
+    }
+
     cmd->type = UNRECOG_CMD;
     return;
 }

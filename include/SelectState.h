@@ -10,5 +10,6 @@ void limit_state_handler(Command_t *cmd, size_t arg_idx);
 void where_state_handler(Command_t *cmd, WhereClauses_t *where_args, size_t arg_idx);
 void update_table_state_handler(Command_t *cmd, size_t arg_idx);
 void delete_state_handler(Command_t *cmd, size_t arg_idx);
+void join_state_handler(Command_t *cmd, size_t arg_idx);
 
 #endif

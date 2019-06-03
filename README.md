@@ -24,7 +24,7 @@ This project is a simple DBMS implemented using C, as the education material of 
 - update Makefile (90e1072)
     - <font color="green">**add**</font> flags `-std=c++11 -O2` to `CFLAGS`
     - <font color="orange">**change**</font> `CC` in `Makefile` to `g++`
-- define 2 tables: `UserTable` , `LikeTable` ()
+- define 2 tables: `UserTable` , `LikeTable` (1dde43e)
     - <font color="green">**add**</font> patch 0.0.013
     - <font color="green">**add**</font> `Like.h` , `Like.c`
     - <font color="green">**add**</font> functions `new_Like` `command_to_Like` `new_LikeTable` `add_Like` `get_Like` by the same means as those of `User`
@@ -34,3 +34,9 @@ This project is a simple DBMS implemented using C, as the education material of 
     - <font color="orange">**change**</font> flags to `-g` (removed `-O2`) for debugging
     - <font color="red">**remove**</font> unit tests
     - <font color="red">**remove**</font> `file mode` , `.load`
+- add query parsing for `join`()
+    - <font color="green">**add**</font> `Like` table to `table_state_handler`
+    - <font color="green">**add**</font> modifications on query structs to support `Like` table
+    - <font color="green">**add**</font> `join_state_handler`
+    - <font color="orange">**change**</font>: simplify `update_table_state_handler` `where_state_handler` to ignore string bonus
+    - 
