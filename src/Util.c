@@ -55,6 +55,26 @@ void print_user(User_t *user, SelectArgs_t *sel_args) {
     printf(")\n");
 }
 
+void print_like(Like_t *like, SelectArgs_t *sel_args){
+    size_t idx;
+    printf("(");
+    for (idx = 0; idx < sel_args->fields_len; idx++) {
+        if (!strncmp(sel_args->fields[idx], "*", 1)) {
+            printf("%d, %d", like->id1, like->id2);
+        } else {
+            if (idx > 0) printf(", ");
+
+            if (!strncmp(sel_args->fields[idx], "id1", 3)) {
+                printf("%d", like->id1);
+            } else if (!strncmp(sel_args->fields[idx], "id2", 3)) {
+                printf("%d", like->id2);
+            }
+        }
+    }
+    printf(")\n");
+
+}
+
 ///
 /// Print the users for given offset and limit restriction
 ///
@@ -95,6 +115,29 @@ void print_users(UserTable_t *table, int *idxList, size_t idxList_len, Command_t
     }*/
 }
 
+void print_likes(LikeTable_t *table, size_t idxList_len, Command_t *cmd) {
+    size_t idx;
+    int limit = cmd->cmd_args.sel_args.limit;
+    int offset = cmd->cmd_args.sel_args.offset;
+
+    if (offset == -1) {
+        offset = 0;
+    }
+
+    if (cmd->cmd_args.sel_args.isAggr == 1){ //Aggregation function
+        if (offset == 0 && limit != 0)
+            print_aggr(table, idxList_len, &(cmd->cmd_args.sel_args));
+    }
+    else {
+        for (idx = offset; idx < idxList_len; idx++) {
+            if (limit != -1 && (idx - offset) >= limit) {
+                break;
+            }
+            print_like(get_Like(table, idx), &(cmd->cmd_args.sel_args));
+        }
+    }
+}
+
 void print_aggr(UserTable_t *table, int *idxList, size_t idxList_len, SelectArgs_t *sel_args){
     size_t idx;
     printf("(");
@@ -119,6 +162,56 @@ void print_aggr(UserTable_t *table, int *idxList, size_t idxList_len, SelectArgs
                 for (int i = 0; i < idxList_len; i++){
                     user = get_User(table, idxList[i]);
                     sum += user->age;
+                }
+            }
+
+            if(!strncmp(sel_args->fields[idx], "sum(", 4)){
+                printf("%d", sum);
+            }
+            else if(!strncmp(sel_args->fields[idx], "avg(", 4)){
+                double avg = sum;
+                if (idxList_len == 0)
+                    avg = 0;
+                else
+                    avg /= idxList_len;
+                printf("%.3lf", avg);
+            }
+
+        }
+        else if (!strncmp(sel_args->fields[idx], "count(", 6)) {
+            printf("%d", (int)idxList_len);
+
+        }
+    }
+
+    printf(")\n");
+
+}
+
+void print_aggr(LikeTable_t *table, size_t idxList_len, SelectArgs_t *sel_args){
+    size_t idx;
+    printf("(");
+    for (idx = 0; idx < sel_args->fields_len; idx++) {
+        
+        if (idx > 0) printf(", ");
+        
+        if (!strncmp(sel_args->fields[idx], "avg(", 4) || !strncmp(sel_args->fields[idx], "sum(", 4)) {
+            int sum = 0;
+            Like_t *like;
+
+            if (!strncmp(sel_args->fields[idx]+4, "id1)", 4)){
+
+                for (int i = 0; i < idxList_len; i++){
+                    like = get_Like(table, i);
+                    sum += like->id1;
+                }
+            }
+
+            else if (!strncmp(sel_args->fields[idx]+4, "id2)", 4)){
+
+                for (int i = 0; i < idxList_len; i++){
+                    like = get_Like(table, i);
+                    sum += like->id2;
                 }
             }
 
@@ -206,7 +299,7 @@ int handle_query_cmd(UserTable_t *user_table, LikeTable_t *like_table, Command_t
         handle_insert_cmd(user_table, like_table, cmd);
         return INSERT_CMD;
     } else if (!strncmp(cmd->args[0], "select", 6)) {
-        handle_select_cmd(user_table, cmd);
+        handle_select_cmd(user_table, like_table, cmd);
         return SELECT_CMD;
     } else if (!strncmp(cmd->args[0], "update", 6)) {
         handle_update_cmd(user_table, cmd);
@@ -224,7 +317,7 @@ int handle_delete_cmd(UserTable_t *table, Command_t *cmd) {
     delete_state_handler(cmd, 1);
 
     int idxList_len;
-    int *idxList = create_idxList(table, cmd, &(cmd->cmd_args.del_args.where_args), &idxList_len);
+    int *idxList = create_idxList(table, NULL, cmd, &(cmd->cmd_args.del_args.where_args), &idxList_len);
     delete_users(table, idxList, idxList_len, cmd);
     free(idxList);
 
@@ -249,7 +342,7 @@ int handle_update_cmd(UserTable_t *table, Command_t *cmd) {
     update_table_state_handler(cmd, 1);
 
     int idxList_len;
-    int *idxList = create_idxList(table, cmd, &(cmd->cmd_args.update_args.where_args), &idxList_len);
+    int *idxList = create_idxList(table, NULL, cmd, &(cmd->cmd_args.update_args.where_args), &idxList_len);
     int ret = update_users(table, idxList, idxList_len, cmd);
     free(idxList);
 
@@ -343,28 +436,38 @@ int handle_insert_cmd(UserTable_t *user_table, LikeTable_t *like_table, Command_
 /// If the select operation success, then change the input arg
 /// `cmd->type` to SELECT_CMD
 ///
-int handle_select_cmd(UserTable_t *table, Command_t *cmd) {
+int handle_select_cmd(UserTable_t *user_table, LikeTable_t *like_table, Command_t *cmd) {
     cmd->type = SELECT_CMD;
     field_state_handler(cmd, 1);
-   
-    int idxList_len;
-    int *idxList = create_idxList(table, cmd, &(cmd->cmd_args.sel_args.where_args), &idxList_len);
-    print_users(table, idxList, idxList_len, cmd);
-    free(idxList);
+    int idxList_len = 0;
 
+    if (cmd->cmd_args.sel_args.join_args.hasJoin){
+
+    }
+    else if (!strncmp(cmd->cmd_args.sel_args.table, "like", 4)){
+        print_likes(like_table, like_table->len, cmd);
+        idxList_len = like_table->len;
+    }
+    else if (!strncmp(cmd->cmd_args.sel_args.table, "user", 4)){
+        int *idxList = create_idxList(user_table, NULL, cmd, &(cmd->cmd_args.sel_args.where_args), &idxList_len);
+        print_users(user_table, idxList, idxList_len, cmd);
+        free(idxList);
+    }
+
+    
     return idxList_len;
 
 }
 
-int* create_idxList(UserTable_t *table, Command_t *cmd, WhereClauses_t *where_args, int *idxList_len) {
-    int *idxList = (int*)malloc(table->len * sizeof(int));
-    memset(idxList, 0, table->len * sizeof(int));
+int* create_idxList(UserTable_t *user_table, LikeTable_t *like_table, Command_t *cmd, WhereClauses_t *where_args, int *idxList_len) {
+    int *idxList = (int*)malloc(user_table->len * sizeof(int));
+    memset(idxList, 0, user_table->len * sizeof(int));
     *idxList_len = 0;
 
-    for (int idx = 0; idx < table->len; idx++){
-        if(table->cache_map[idx]){ //row exists
+    for (int idx = 0; idx < user_table->len; idx++){
+        if(user_table->cache_map[idx]){ //row exists
             //check for where conditions
-            User_t *user = get_User(table, idx);
+            User_t *user = get_User(user_table, idx);
             int relation_result[2], final_result;
 
             for (int i = 0; i < where_args->conditions_len; i++){
