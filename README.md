@@ -39,7 +39,10 @@ This project is a simple DBMS implemented using C, as the education material of 
     - <font color="green">**add**</font> modifications on query structs to support `Like` table
     - <font color="green">**add**</font> `join_state_handler`
     - <font color="orange">**change**</font>: simplify `update_table_state_handler` `where_state_handler` to ignore string bonus
-- add select (without join) for `Like` table ()
+- add select (without join) for `Like` table (843c240)
     - <font color="green">**add**</font> `select` (without join) for `Like` table
     - <font color="green">**add**</font> `print_like` `print_likes` `print_aggr (overload)`
-    - 
+- add join select ()
+    - <font color="green">**add**</font> `join` operation to `select`
+<font color="blue">**The program now functions but with high time complexity**</font>
+---

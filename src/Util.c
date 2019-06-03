@@ -442,7 +442,9 @@ int handle_select_cmd(UserTable_t *user_table, LikeTable_t *like_table, Command_
     int idxList_len = 0;
 
     if (cmd->cmd_args.sel_args.join_args.hasJoin){
-
+        int *idxList = create_idxList(user_table, NULL, cmd, &(cmd->cmd_args.sel_args.where_args), &idxList_len);
+        handle_join_operation(user_table, like_table, idxList, idxList_len, cmd);
+        free(idxList);
     }
     else if (!strncmp(cmd->cmd_args.sel_args.table, "like", 4)){
         print_likes(like_table, like_table->len, cmd);
@@ -546,6 +548,51 @@ int* create_idxList(UserTable_t *user_table, LikeTable_t *like_table, Command_t 
     }
 
     return idxList;
+}
+
+void handle_join_operation(UserTable_t *user_table, LikeTable_t *like_table, int *idxList, size_t idxList_len, Command_t *cmd){
+    size_t idx;
+    int limit = cmd->cmd_args.sel_args.limit;
+    int offset = cmd->cmd_args.sel_args.offset;
+
+    if (offset == -1) {
+        offset = 0;
+    }
+
+    if (offset != 0 || limit == 0) // only count()
+        return;
+    
+    int count = 0;
+    int like_table_len = like_table->len;
+    User_t *user = NULL;
+    Like_t *like = NULL;
+    for (idx = 0; idx < idxList_len; idx ++){
+        user = get_User(user_table, idxList[idx]);
+
+        //for each user in the list, find if join condition matched
+        if (cmd->cmd_args.sel_args.join_args.like_field == 1){ //id = id1
+            //since id1 is primary key of Like, stop when we find one occurrence
+            for (int i = 0; i < like_table_len; i++){
+                like = get_Like(like_table, i);
+                if (user->id == like->id1){
+                    count ++;
+                    break;
+                }
+            }
+        }
+        else{ // id = id2
+            for (int i = 0; i < like_table_len; i++){
+                like = get_Like(like_table, i);
+                if (user->id == like->id2){
+                    count ++;
+                }
+            }
+        }
+
+    }
+
+    printf("(%d)\n", count);
+
 }
 
 ///
