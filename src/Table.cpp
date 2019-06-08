@@ -34,8 +34,10 @@ LikeTable_t *new_LikeTable(){
                             sizeof(Like_t) * INIT_TABLE_SIZE);
     table->cache_map = (unsigned char*)malloc(sizeof(char)*INIT_TABLE_SIZE);
     memset(table->cache_map, 0, sizeof(char)*INIT_TABLE_SIZE);
-    table->id1_count = std::map<unsigned int, int>();
-    table->id2_count = std::map<unsigned int, int>();
+    memset(table->id1_count, 0, sizeof(table->id1_count));
+    memset(table->id2_count, 0, sizeof(table->id2_count));
+    table->big_id1_count = std::map<unsigned int, int>();
+    table->big_id2_count = std::map<unsigned int, int>();
     return table;
 }
 
@@ -130,8 +132,22 @@ int add_Like(LikeTable_t *table, Like_t *like) {
     idx = table->len;
     memcpy((table->likes)+idx, like, sizeof(Like_t));
     table->cache_map[idx] = 1;
-    table->id1_count[like->id1] ++;
-    table->id2_count[like->id2] ++;
+
+    if (like->id1 <= INIT_TABLE_SIZE){
+        table->id1_count[like->id1] ++;
+    }
+    else{
+        table->big_id1_count[like->id1] ++;
+    }
+
+    if (like->id2 <= INIT_TABLE_SIZE){
+        table->id2_count[like->id2] ++;
+    }
+    else{
+        table->big_id2_count[like->id2] ++;
+    }
+    //table->id1_count[like->id1] ++;
+    //table->id2_count[like->id2] ++;
     table->len++;
     return 1;
 }

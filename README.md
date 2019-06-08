@@ -46,7 +46,7 @@ This project is a simple DBMS implemented using C, as the education material of 
     - <font color="green">**add**</font> `join` operation to `select`
 <font color="blue">**The program now functions but with high time complexity**</font>
 ---
-- add some index and special cases optimization()
+- add some index and special cases optimization(1fe0c2a)
     - <font color="green">**add**</font> index (std::map) on `user.id`
     - <font color="green">**add**</font> count of each value (std::map) on `like.id1` `like.id2`
     - <font color="green">**add**</font> use the map above to speedup `insert` `delete` `update` `join`
@@ -56,3 +56,5 @@ This project is a simple DBMS implemented using C, as the education material of 
     - <font color="green">**add**</font> `age_count` to `User` , `optimized_t3`
     - <font color="orange">**change**</font> all `.c` files to `.cpp` files
     - <font color="green">**add**</font>: use `id_index` array + `big_id_index` map for index on `id` to perform faster insertions on general testcases
+- optimized index on Like table()
+    - <font color="green">**add**</font>: use the same method of `id_index` + `big_id_index` to construct `id1_count` `big_id1_count` `id2_count` `big_id2_count` on `Like` table to speedup

@@ -28,8 +28,10 @@ typedef struct LikeTable {
     size_t len;
     Like_t *likes;
     unsigned char *cache_map;
-    std::map<unsigned int, int> id1_count;
-    std::map<unsigned int, int> id2_count;
+    int id1_count[INIT_TABLE_SIZE + 1];
+    int id2_count[INIT_TABLE_SIZE + 1];
+    std::map<unsigned int, int> big_id1_count;
+    std::map<unsigned int, int> big_id2_count;
 } LikeTable_t;
 
 UserTable_t *new_UserTable();

@@ -619,8 +619,15 @@ void handle_join_operation(UserTable_t *user_table, LikeTable_t *like_table, int
                     break;
                 }
             }*/
-            if (like_table->id1_count.count(user->id))
-                count ++;
+            if (user->id <= INIT_TABLE_SIZE){
+                if (like_table->id1_count[user->id])
+                    count ++;
+            }
+            else{
+                if (like_table->big_id1_count.count(user->id))
+                    count ++;
+            }
+            
         }
         else{ // id = id2
             /*for (int i = 0; i < like_table_len; i++){
@@ -629,9 +636,16 @@ void handle_join_operation(UserTable_t *user_table, LikeTable_t *like_table, int
                     count ++;
                 }
             }*/
-            auto like_ptr = like_table->id2_count.find(user->id);
-            if (like_ptr != like_table->id2_count.end())
-                count += like_ptr->second;
+            if (user->id <= INIT_TABLE_SIZE){
+                if (like_table->id2_count[user->id])
+                    count += like_table->id2_count[user->id];
+            }
+            else{
+                auto like_ptr = like_table->big_id2_count.find(user->id);
+                if (like_ptr != like_table->big_id2_count.end())
+                    count += like_ptr->second;
+            }
+            
         }
 
     }
