@@ -42,7 +42,17 @@ This project is a simple DBMS implemented using C, as the education material of 
 - add select (without join) for `Like` table (843c240)
     - <font color="green">**add**</font> `select` (without join) for `Like` table
     - <font color="green">**add**</font> `print_like` `print_likes` `print_aggr (overload)`
-- add join select ()
+- add join select (5e91902)
     - <font color="green">**add**</font> `join` operation to `select`
 <font color="blue">**The program now functions but with high time complexity**</font>
 ---
+- add some index and special cases optimization()
+    - <font color="green">**add**</font> index (std::map) on `user.id`
+    - <font color="green">**add**</font> count of each value (std::map) on `like.id1` `like.id2`
+    - <font color="green">**add**</font> use the map above to speedup `insert` `delete` `update` `join`
+    - <font color="red">**remove**</font> the old fashion primary key check and join condition check which takes O(n)
+    - <font color="green">**add**</font> `-Wno-sign-compare` flag to `Makefile`
+    - <font color="green">**add**</font> `OptimizedTest.h` `OptimizedTest.c`
+    - <font color="green">**add**</font> `age_count` to `User` , `optimized_t3`
+    - <font color="orange">**change**</font> all `.c` files to `.cpp` files
+    - <font color="green">**add**</font>: use `id_index` array + `big_id_index` map for index on `id` to perform faster insertions on general testcases

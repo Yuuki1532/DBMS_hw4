@@ -19,6 +19,9 @@ UserTable_t *new_UserTable() {
     /*table->fp = NULL;
     table->file_name = NULL;*/
     //load_table(table, file_name);
+    memset(table->id_index, 0, sizeof(table->id_index));
+    table->big_id_index = std::map<unsigned int, User_t*>();
+    memset(table->age_count, 0, sizeof(table->age_count));
     return table;
 }
 
@@ -31,6 +34,8 @@ LikeTable_t *new_LikeTable(){
                             sizeof(Like_t) * INIT_TABLE_SIZE);
     table->cache_map = (unsigned char*)malloc(sizeof(char)*INIT_TABLE_SIZE);
     memset(table->cache_map, 0, sizeof(char)*INIT_TABLE_SIZE);
+    table->id1_count = std::map<unsigned int, int>();
+    table->id2_count = std::map<unsigned int, int>();
     return table;
 }
 
@@ -42,17 +47,32 @@ LikeTable_t *new_LikeTable(){
 ///
 int add_User(UserTable_t *table, User_t *user) {
     size_t idx;
-    User_t *usr_ptr;
+    //User_t *usr_ptr;
     if (!table || !user) {
         return 0;
     }
     // Check id doesn't exist in the table
-    for (idx = 0; idx < table->len; idx++) {
+    /*for (idx = 0; idx < table->len; idx++) {
         usr_ptr = get_User(table, idx);
         if (usr_ptr != NULL && usr_ptr->id == user->id) {
             return 0;
         }
+    }*/
+
+    //first check if id is less then INIT_TABLE_SIZE
+    if (user->id <= INIT_TABLE_SIZE){
+        if (table->id_index[user->id] != NULL)
+            return 0;
+        
     }
+    else{ //must check big_id_index
+        if (table->big_id_index.size() != 0){
+            auto usr_ptr = table->big_id_index.find(user->id);
+            if (usr_ptr != table->big_id_index.end() && usr_ptr->second != NULL)
+                return 0;
+        }
+    }
+
     if (table->len == table->capacity) {
         User_t *new_user_buf = (User_t*)malloc(sizeof(User_t)*(table->len+EXT_LEN));
         unsigned char *new_cache_buf = (unsigned char *)malloc(sizeof(unsigned char)*(table->len+EXT_LEN));
@@ -73,6 +93,14 @@ int add_User(UserTable_t *table, User_t *user) {
     memcpy((table->users)+idx, user, sizeof(User_t));
     table->cache_map[idx] = 1;
     table->len++;
+    //table->id_index[user->id] = table->users+idx;
+    if (user->id <= INIT_TABLE_SIZE){
+        table->id_index[user->id] = table->users+idx;
+    }
+    else{
+        table->big_id_index[user->id] = table->users+idx;
+    }
+    table->age_count[user->age] ++;
     return 1;
 }
 
@@ -102,6 +130,8 @@ int add_Like(LikeTable_t *table, Like_t *like) {
     idx = table->len;
     memcpy((table->likes)+idx, like, sizeof(Like_t));
     table->cache_map[idx] = 1;
+    table->id1_count[like->id1] ++;
+    table->id2_count[like->id2] ++;
     table->len++;
     return 1;
 }

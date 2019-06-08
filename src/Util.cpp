@@ -9,6 +9,7 @@
 #include "Command.h"
 #include "Table.h"
 #include "SelectState.h"
+#include "OptimizedTest.h"
 
 ///
 /// Allocate State_t and initialize some attributes
@@ -93,10 +94,16 @@ void print_users(UserTable_t *table, int *idxList, size_t idxList_len, Command_t
                 print_aggr(table, idxList, idxList_len, &(cmd->cmd_args.sel_args));
         }
         else {
-            for (idx = offset; idx < idxList_len; idx++) {
-                if (limit != -1 && (idx - offset) >= limit) {
+            int ub = idxList_len;
+
+            if (limit != -1)
+                if (offset + limit < ub)
+                    ub = offset + limit;
+
+            for (idx = offset; idx < ub; idx++) {
+                /*if (limit != -1 && (idx - offset) >= limit) {
                     break;
-                }
+                }*/
                 print_user(get_User(table, idxList[idx]), &(cmd->cmd_args.sel_args));
             }
         }
@@ -129,10 +136,16 @@ void print_likes(LikeTable_t *table, size_t idxList_len, Command_t *cmd) {
             print_aggr(table, idxList_len, &(cmd->cmd_args.sel_args));
     }
     else {
-        for (idx = offset; idx < idxList_len; idx++) {
-            if (limit != -1 && (idx - offset) >= limit) {
+        int ub = idxList_len;
+
+        if (limit != -1)
+            if (offset + limit < ub)
+                ub = offset + limit;
+        
+        for (idx = offset; idx < ub; idx++) {
+            /*if (limit != -1 && (idx - offset) >= limit) {
                 break;
-            }
+            }*/
             print_like(get_Like(table, idx), &(cmd->cmd_args.sel_args));
         }
     }
@@ -141,6 +154,7 @@ void print_likes(LikeTable_t *table, size_t idxList_len, Command_t *cmd) {
 void print_aggr(UserTable_t *table, int *idxList, size_t idxList_len, SelectArgs_t *sel_args){
     size_t idx;
     printf("(");
+
     for (idx = 0; idx < sel_args->fields_len; idx++) {
         
         if (idx > 0) printf(", ");
@@ -327,10 +341,17 @@ int handle_delete_cmd(UserTable_t *table, Command_t *cmd) {
 
 void delete_users(UserTable_t *table, int *idxList, size_t idxList_len, Command_t *cmd) {
     size_t idx;
-    //User_t *user = NULL;
+    User_t *user = NULL;
 
     for (idx = 0; idx < idxList_len; idx++) {
-        //user = get_User(table, idxList[idx]);
+        user = get_User(table, idxList[idx]);
+        if (user->id <= INIT_TABLE_SIZE){
+            table->id_index[user->id] = NULL;
+        }
+        else{
+            table->big_id_index[user->id] = NULL;
+        }
+        
         table->cache_map[idxList[idx]] = 0;
         
     }
@@ -360,16 +381,30 @@ int update_users(UserTable_t *table, int *idxList, size_t idxList_len, Command_t
 
         int rhs = atoi(cmd->cmd_args.update_args.rhs_literal);
         int idxFound = -1;
-        User_t *usr_ptr;
+        //User_t *usr_ptr;
 
         // Check if id exists in the table
-        for (idx = 0; idx < table->len; idx++) {
+        /*for (idx = 0; idx < table->len; idx++) {
             usr_ptr = get_User(table, idx);
             if (usr_ptr != NULL && usr_ptr->id == rhs) {
                 idxFound = idx;
                 break;
             }
+        }*/
+        //find if id exists
+        if (rhs <= INIT_TABLE_SIZE){
+            if (table->id_index[rhs] != NULL)
+                idxFound = table->id_index[rhs] - table->users;
         }
+        else{ //find big_id_index
+            if (table->big_id_index.size() != 0){
+                auto usr_ptr = table->big_id_index.find(rhs);
+                if (usr_ptr != table->big_id_index.end() && usr_ptr->second != NULL){
+                    idxFound = usr_ptr->second - table->users;
+                }
+            }
+        }
+        
 
         //check if the row whose id found is the one to update, i.e. no error
         if (idxFound != -1 && idxFound != idxList[0]){
@@ -390,8 +425,10 @@ void update_user(User_t *user, UpdateArgs_t *update_args){
     char *lhs = update_args->field_name;
     char *rhs = update_args->rhs_literal;
 
-    if (!strncmp(lhs, "id", 2))
+    if (!strncmp(lhs, "id", 2)){
         user->id = atoi(rhs);
+        //map
+    }
     else if (!strncmp(lhs, "name", 4))
         strncpy(user->name, rhs, MAX_USER_NAME);
     else if (!strncmp(lhs, "email", 5))
@@ -451,9 +488,12 @@ int handle_select_cmd(UserTable_t *user_table, LikeTable_t *like_table, Command_
         idxList_len = like_table->len;
     }
     else if (!strncmp(cmd->cmd_args.sel_args.table, "user", 4)){
-        int *idxList = create_idxList(user_table, NULL, cmd, &(cmd->cmd_args.sel_args.where_args), &idxList_len);
-        print_users(user_table, idxList, idxList_len, cmd);
-        free(idxList);
+        //optimize t3
+        if (!optimized_t3(user_table, cmd)){
+            int *idxList = create_idxList(user_table, NULL, cmd, &(cmd->cmd_args.sel_args.where_args), &idxList_len);
+            print_users(user_table, idxList, idxList_len, cmd);
+            free(idxList);
+        }
     }
 
     
@@ -470,7 +510,7 @@ int* create_idxList(UserTable_t *user_table, LikeTable_t *like_table, Command_t 
         if(user_table->cache_map[idx]){ //row exists
             //check for where conditions
             User_t *user = get_User(user_table, idx);
-            int relation_result[2], final_result;
+            int relation_result[2], final_result = 0;
 
             for (int i = 0; i < where_args->conditions_len; i++){
 
@@ -484,7 +524,7 @@ int* create_idxList(UserTable_t *user_table, LikeTable_t *like_table, Command_t 
                     if (!strncmp(lhs, "id", 2))
                         lhsi = user->id;
 
-                    else if (!strncmp(lhs, "age", 3))
+                    else/* (!strncmp(lhs, "age", 3))*/
                         lhsi = user->age;
 
                     
@@ -530,7 +570,7 @@ int* create_idxList(UserTable_t *user_table, LikeTable_t *like_table, Command_t 
             else if (where_args->conditions_len == 1){
                 final_result = relation_result[0];
             }
-            else if (where_args->conditions_len == 2){
+            else /*(where_args->conditions_len == 2)*/{
                 char *logical_op = where_args->logical_op;
 
                 if (!strncmp(logical_op, "and", 3))
@@ -563,30 +603,35 @@ void handle_join_operation(UserTable_t *user_table, LikeTable_t *like_table, int
         return;
     
     int count = 0;
-    int like_table_len = like_table->len;
+    //int like_table_len = like_table->len;
     User_t *user = NULL;
-    Like_t *like = NULL;
+    //Like_t *like = NULL;
     for (idx = 0; idx < idxList_len; idx ++){
         user = get_User(user_table, idxList[idx]);
 
         //for each user in the list, find if join condition matched
         if (cmd->cmd_args.sel_args.join_args.like_field == 1){ //id = id1
             //since id1 is primary key of Like, stop when we find one occurrence
-            for (int i = 0; i < like_table_len; i++){
+            /*for (int i = 0; i < like_table_len; i++){
                 like = get_Like(like_table, i);
                 if (user->id == like->id1){
                     count ++;
                     break;
                 }
-            }
+            }*/
+            if (like_table->id1_count.count(user->id))
+                count ++;
         }
         else{ // id = id2
-            for (int i = 0; i < like_table_len; i++){
+            /*for (int i = 0; i < like_table_len; i++){
                 like = get_Like(like_table, i);
                 if (user->id == like->id2){
                     count ++;
                 }
-            }
+            }*/
+            auto like_ptr = like_table->id2_count.find(user->id);
+            if (like_ptr != like_table->id2_count.end())
+                count += like_ptr->second;
         }
 
     }

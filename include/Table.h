@@ -2,11 +2,13 @@
 #define TABLE_H
 #include <stdlib.h>
 #include <stdio.h>
+#include <map>
+#include <vector>
 #include "User.h"
 #include "Like.h"
 
-#define INIT_TABLE_SIZE 10000
-#define EXT_LEN 500
+#define INIT_TABLE_SIZE 150000
+#define EXT_LEN 50000
 
 typedef struct UserTable {
     size_t capacity;
@@ -15,6 +17,10 @@ typedef struct UserTable {
     unsigned char *cache_map;
     /*FILE *fp;
     char *file_name;*/
+    //std::map<unsigned int, User_t*> id_index;
+    User_t* id_index[INIT_TABLE_SIZE + 1]; //index entries whose id is less then INIT_TABLE_SIZE
+    std::map<unsigned int, User_t*> big_id_index;
+    int age_count[201];
 } UserTable_t;
 
 typedef struct LikeTable {
@@ -22,6 +28,8 @@ typedef struct LikeTable {
     size_t len;
     Like_t *likes;
     unsigned char *cache_map;
+    std::map<unsigned int, int> id1_count;
+    std::map<unsigned int, int> id2_count;
 } LikeTable_t;
 
 UserTable_t *new_UserTable();

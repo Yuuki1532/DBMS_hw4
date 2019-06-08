@@ -29,4 +29,5 @@ int handle_delete_cmd(UserTable_t *table, Command_t *cmd);
 void delete_users(UserTable_t *table, int *idxList, size_t idxList_len, Command_t *cmd);
 void handle_join_operation(UserTable_t *user_table, LikeTable_t *like_table, int *idxList, size_t idxList_len, Command_t *cmd);
 
+
 #endif
