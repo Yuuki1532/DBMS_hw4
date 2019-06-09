@@ -7,7 +7,7 @@
 #include "User.h"
 #include "Like.h"
 
-#define INIT_TABLE_SIZE 150000
+#define INIT_TABLE_SIZE 135000
 #define EXT_LEN 50000
 
 typedef struct UserTable {
@@ -38,10 +38,27 @@ UserTable_t *new_UserTable();
 int add_User(UserTable_t *table, User_t *user);
 //int archive_table(UserTable_t *table);
 //int load_table(UserTable_t *table, char *file_name);
-User_t* get_User(UserTable_t *table, size_t idx);
+inline User_t* get_User(UserTable_t *table, size_t idx);
 
 LikeTable_t *new_LikeTable();
 int add_Like(LikeTable_t *table, Like_t *user);
-Like_t* get_Like(LikeTable_t *table, size_t idx);
+inline Like_t* get_Like(LikeTable_t *table, size_t idx);
+
+///
+/// Return the user in table by the given index
+///
+inline User_t* get_User(UserTable_t *table, size_t idx) {
+    if (!table->cache_map[idx]) {
+        return NULL;
+    }
+    return table->users+idx;
+}
+
+inline Like_t* get_Like(LikeTable_t *table, size_t idx) {
+    if (!table->cache_map[idx]) {
+        return NULL;
+    }
+    return table->likes+idx;
+}
 
 #endif

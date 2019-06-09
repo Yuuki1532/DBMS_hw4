@@ -479,9 +479,12 @@ int handle_select_cmd(UserTable_t *user_table, LikeTable_t *like_table, Command_
     int idxList_len = 0;
 
     if (cmd->cmd_args.sel_args.join_args.hasJoin){
-        int *idxList = create_idxList(user_table, NULL, cmd, &(cmd->cmd_args.sel_args.where_args), &idxList_len);
-        handle_join_operation(user_table, like_table, idxList, idxList_len, cmd);
-        free(idxList);
+        //optimize t4
+        if (!optimized_t4(user_table, like_table, cmd) && !optimized_t5(user_table, like_table, cmd)){
+            int *idxList = create_idxList(user_table, NULL, cmd, &(cmd->cmd_args.sel_args.where_args), &idxList_len);
+            handle_join_operation(user_table, like_table, idxList, idxList_len, cmd);
+            free(idxList);
+        }
     }
     else if (!strncmp(cmd->cmd_args.sel_args.table, "like", 4)){
         print_likes(like_table, like_table->len, cmd);

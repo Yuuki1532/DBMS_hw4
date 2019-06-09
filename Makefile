@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-std=c++11 -Iinclude -Wall -Wno-sign-compare -O2
+CFLAGS=-std=c++11 -Iinclude -Wall -Wno-sign-compare -O2 -pthread
 TARGET=shell
 DEPS=$(wildcard *.h)
 

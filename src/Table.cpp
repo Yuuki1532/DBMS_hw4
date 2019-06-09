@@ -221,19 +221,4 @@ int add_Like(LikeTable_t *table, Like_t *like) {
     return table->len;
 }*/
 
-///
-/// Return the user in table by the given index
-///
-User_t* get_User(UserTable_t *table, size_t idx) {
-    if (!table->cache_map[idx]) {
-        return NULL;
-    }
-    return table->users+idx;
-}
 
-Like_t* get_Like(LikeTable_t *table, size_t idx) {
-    if (!table->cache_map[idx]) {
-        return NULL;
-    }
-    return table->likes+idx;
-}
