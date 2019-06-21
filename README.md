@@ -1,6 +1,8 @@
 # Simple DBMS                                                                                                   
 
-This project is a simple DBMS implemented using C, as the education material of the Introduction to Database Systems in National Chiao Tung University
+This project is a simple DBMS implemented using **C++**, as the education material of the Introduction to Database Systems in National Chiao Tung University
+
+### This is the revised version using `c++`
 
 ### Table schema
 #### `User` table
